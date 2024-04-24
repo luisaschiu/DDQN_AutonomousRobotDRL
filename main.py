@@ -55,7 +55,8 @@ def data_thread():
     while True:
         generate_data()
 
-def test_case1():
+# 4x4 static maze
+def TestCase1():
     maze_array1 = np.array(
     [[0.0, 1.0, 1.0, 0.0],
     [0.0, 0.0, 0.0, 0.0],
@@ -69,8 +70,10 @@ def test_case1():
     new_network = DoubleDQN((120, 120), maze_size)
     new_network.play_game_static(maze1, 100, "model_weights.h5")
 
-# 8 Different mazes
-def test_case3():
+# 4x4 static maze
+
+# 8 Different mazes, no heuristics
+def TestCase3():
         # Using a 4x4 maze:
     # Testing dynamic mazes:
     maze_array1 = np.array(
@@ -158,7 +161,7 @@ def test_case3():
 
 
 if __name__ == "__main__":
-    test_case1()
+    test_case3()
     # # Using a 4x4 maze:
     # # Testing dynamic mazes:
     # maze_array1 = np.array(
