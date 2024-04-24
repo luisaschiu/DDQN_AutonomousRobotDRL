@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+# tf.compat.v1.enable_eager_execution()
 from collections import deque
 import random
 from class_maze import Maze, deleteGifs
@@ -16,7 +17,7 @@ import math
 import pickle
 import os
 
-class DQN:
+class DoubleDQN:
     def __init__(self, state_size, maze_size):
         # State size is the image size
         self.state_size = state_size
@@ -25,10 +26,11 @@ class DQN:
         self.replay_memory_capacity=10000000
         self.replay_memory = deque(maxlen=self.replay_memory_capacity)
         self.replay_start_size = maze_size**3*8*8 # nrows^3
+        # self.replay_start_size = maze_size**3 # TODO: FIX THIS AFTER YOU DEBUG UPDATE MAIN MODEL FUNCTION
         self.discount_factor = 0.99 # Also known as gamma
         self.init_exploration_rate = 1.0 # Exploration rate, also known as epsilon
         self.final_exploration_rate = 0.1
-        # self.final_exploration_frame = 12  # This performed better than the past
+        # self.final_exploration_frame = maze_size*250  # This performed better than the past
         self.final_exploration_frame = maze_size*250*8*2 # Josh uses: (nrows^3*5)
         self.learning_rate = 0.001
         self.minibatch_size = 32
@@ -145,38 +147,37 @@ class DQN:
             loss (tf.float32): Huber loss of temporal difference.
         """
         with tf.GradientTape() as tape:
-            next_state_q = self.target_model(next_state_batch)
-            # print("next_state_q")
-            # print(next_state_q)
-            # tf.print(next_state_q)
+            next_state_q_main = self.model(next_state_batch)
+            next_state_q_target = self.target_model(next_state_batch)
             # Replace unavailable actions with -infinity
-            masked_q_tensor = tf.where(next_state_available_actions_batch == 1, next_state_q, tf.constant(float('-inf'), shape=next_state_q.shape))
+            # NOTE: Action selection using main model
+            masked_q_tensor_main = tf.where(next_state_available_actions_batch == 1, next_state_q_main, tf.constant(float('-inf'), shape=next_state_q_main.shape))
             # print(masked_qval_tensor)
-            # Find largest q value within masked q tensor
-            next_state_max_q = tf.math.reduce_max(masked_q_tensor, axis=1)
-            # print(largest_values)
-            # next_state_max_q = tf.math.reduce_max(next_state_q, axis=1)
-            # print("next_state_max_q")
-            # print(next_state_max_q)
-            # tf.print(next_state_max_q)
-            # Computes the expected Q-value using the Bellman equation.
-            expected_q = reward_batch + self.discount_factor * next_state_max_q * (1.0 - tf.cast(game_over_batch, tf.float32))
-            # tf.reduce_sum sums up all the Q-values for each sample in the batch.
-            # tf.one_hot creates an encoding of the action batch with a depth of self.action_size.
-            # main_q would theoretically yield a tensor vector of size (batch_size, action_size), which is (32, 4)
+
+            # Find best action indices using main model. NOTE: might cause issues?
+            best_action_indices = tf.argmax(masked_q_tensor_main, axis=1)
+            # NOTE: Q-value estimation using target model
+            # Use target model to estimate Q-values for the best actions (that were chosen using main model)
+            next_state_q_max_target = tf.reduce_sum(next_state_q_target * tf.one_hot(best_action_indices, depth=self.action_size, on_value=1.0, off_value=0.0), axis=1)
+            # Compute the expected Q-value using the Bellman equation
+            expected_q = reward_batch + self.discount_factor * next_state_q_max_target * (1.0 - tf.cast(game_over_batch, tf.float32))
+
+
             unique_actions = tf.constant(["UP", "DOWN", "LEFT", "RIGHT"])  # Get unique actions as a TensorFlow constant
+            # tf.print(action_batch)
             action_indices = tf.argmax(tf.cast(tf.equal(unique_actions[:, tf.newaxis], action_batch), tf.int32), axis=0)
             # print(action_indices)
-            action_one_hot = tf.one_hot(action_indices, depth=self.action_size, on_value=1.0, off_value=0.0)
-            main_q = tf.reduce_sum(self.model(state_batch) * action_one_hot, axis=1)
-            # Output loss val tensor shape: (32,)
-            main_q_dim = tf.expand_dims(main_q, axis = 1)
+            # tf.print(action_indices)
+            main_q = tf.reduce_sum(self.model(state_batch) * tf.one_hot(action_indices, depth=self.action_size, on_value=1.0, off_value=0.0), axis = 1)
+            # tf.print(main_q)
+            # print(main_q)
             expected_q_dim = tf.expand_dims(expected_q, axis = 1)
+            print(expected_q_dim)
+            main_q_dim = tf.expand_dims(main_q, axis = 1)
             # print(main_q_dim)
-            # print(expected_q_dim)
+            # print(main_q)
             loss = losses.Huber(reduction=losses.Reduction.NONE)
             loss_val = loss(tf.stop_gradient(expected_q_dim), main_q_dim)
-            # print(loss_val)
 
         gradients = tape.gradient(loss_val, self.model.trainable_variables)
         clipped_gradients = [tf.clip_by_norm(grad, 10) for grad in gradients]

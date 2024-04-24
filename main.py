@@ -1,6 +1,6 @@
 import numpy as np
 from class_maze import Maze
-from class_DQN import DQN, show_pickle_figure, save_pickle_to_csv
+from class_DoubleDQN import DoubleDQN, show_pickle_figure, save_pickle_to_csv
 import matplotlib.pyplot as plt
 from itertools import count
 import random
@@ -140,14 +140,14 @@ if __name__ == "__main__":
     # maze7.show()
     maze8 = Maze(maze_array8, marker_filepath, (3,3), (0,0), 90)
     # maze8.show()
-    network = DQN((120, 120), maze_size)
+    network = DoubleDQN((120, 120), maze_size)
     # network.train_agent_static(maze1, 200)
     network.train_agent_dynamic([maze1, maze2, maze3, maze4, maze5, maze6, maze7, maze8], 3000, heuristics_flag=True)
 
     # answer = input("Ready to play the game? y/n: ")
     # Create a new object, load weights, and see if it works?
     # if answer == "y":
-    new_network = DQN((120, 120), maze_size)
+    new_network = DoubleDQN((120, 120), maze_size)
     # new_network.play_game_static(maze1, 100, "model_weights.h5")
     new_network.play_game_dynamic([maze1, maze2, maze3, maze4, maze5, maze6, maze7, maze8], 200, "model_weights.h5")
     # if answer == "n":
