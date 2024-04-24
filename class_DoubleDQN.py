@@ -25,13 +25,13 @@ class DoubleDQN:
         # From Google article pseudocode line 1: Initialize replay memory D to capacity N
         self.replay_memory_capacity=10000000
         self.replay_memory = deque(maxlen=self.replay_memory_capacity)
-        self.replay_start_size = maze_size**3*8*8 # nrows^3
-        # self.replay_start_size = maze_size**3
+        # self.replay_start_size = maze_size**3*8*8 # nrows^3
+        self.replay_start_size = maze_size**3
         self.discount_factor = 0.99 # Also known as gamma
         self.init_exploration_rate = 1.0 # Exploration rate, also known as epsilon
         self.final_exploration_rate = 0.1
-        # self.final_exploration_frame = maze_size*250  # For static mazes
-        self.final_exploration_frame = maze_size*250*8*2
+        self.final_exploration_frame = maze_size*250  # For static mazes
+        # self.final_exploration_frame = maze_size*250*8*2
         self.learning_rate = 0.001
         self.minibatch_size = 32
         self.max_steps_per_episode = maze_size*5 # nrows^2
@@ -39,7 +39,8 @@ class DoubleDQN:
         self.agent_history_length = 4 # Number of images from each timestep stacked
         self.model = self.build_model()
         self.target_model = models.clone_model(self.model)
-        self.update_target_network_freq = maze_size*6 
+        # self.update_target_network_freq = maze_size*6 
+        self.update_target_network_freq = maze_size*7
         self.cur_stacked_images = deque(maxlen=self.agent_history_length)
         # From Google article pseudocode line 3: Initialize action-value function Q^hat(target network) with same weights as Q
         self.target_model.set_weights(self.model.get_weights())
@@ -538,10 +539,10 @@ class DoubleDQN:
                 # print(masked_qval_array)
                 max_val_index = np.argmax(np.max(masked_qval_array, axis=0))
 
-                if episode_step == 0 and episode == 0:
-                    self.save_to_csv([episode, masked_qval_array[0], masked_qval_array[1], masked_qval_array[2], masked_qval_array[3], masked_qval_array[max_val_index]], "q_val.csv", ["EPISODE", "UP", "DOWN", "LEFT", "RIGHT", "MAX Q-VAL"])
-                else:
-                    self.save_to_csv([episode, masked_qval_array[0], masked_qval_array[1], masked_qval_array[2], masked_qval_array[3], masked_qval_array[max_val_index]], "q_val.csv", None)
+                # if episode_step == 0 and episode == 0:
+                #     self.save_to_csv([episode, masked_qval_array[0], masked_qval_array[1], masked_qval_array[2], masked_qval_array[3], masked_qval_array[max_val_index]], "q_val.csv", ["EPISODE", "UP", "DOWN", "LEFT", "RIGHT", "MAX Q-VAL"])
+                # else:
+                #     self.save_to_csv([episode, masked_qval_array[0], masked_qval_array[1], masked_qval_array[2], masked_qval_array[3], masked_qval_array[max_val_index]], "q_val.csv", None)
                 
                 action = self.get_action(state, available_actions, 0.01)
                 total_step += 1

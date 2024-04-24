@@ -161,7 +161,7 @@ def TestCase3():
 
 
 if __name__ == "__main__":
-    test_case3()
+    TestCase1()
     # # Using a 4x4 maze:
     # # Testing dynamic mazes:
     # maze_array1 = np.array(
