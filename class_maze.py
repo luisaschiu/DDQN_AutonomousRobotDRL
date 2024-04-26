@@ -331,11 +331,13 @@ class Maze:
         frame_one.save(gif_name, format="GIF", append_images=frames,
                save_all=True, duration=300, loop=0)
 
-def deleteGifs():
-    for filename in glob.glob('gameplay_episode_videos/*.gif'):
-        os.remove(filename)
-    for filename in glob.glob('training_episode_videos/*.gif'):
-        os.remove(filename)
+def deleteGifs(folder_type: str):
+    if folder_type == "gameplay":
+        for filename in glob.glob('gameplay_episode_videos/*.gif'):
+            os.remove(filename)
+    elif folder_type == "training":
+        for filename in glob.glob('training_episode_videos/*.gif'):
+            os.remove(filename)
 
 class MazeError(Exception):
     def __init__(self, message="An error occurred"):
